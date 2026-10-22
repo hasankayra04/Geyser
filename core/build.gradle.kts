@@ -194,7 +194,27 @@ val generateGitProperties = tasks.register("generateGitProperties") {
     }
 }
 
+val downloadIntegratedPack = tasks.register("downloadIntegratedPack") {
+    val packFile = file("src/main/resources/GeyserIntegratedPack.mcpack")
+    val source = "https://github.com/hasankayra04/GeyserIntegratedPack/releases/latest/download/GeyserIntegratedPack.mcpack"
+    onlyIf { !packFile.exists() }
+    doLast {
+        println("cannot find core/src/main/resources/GeyserIntegratedPack.mcpack, trying to download from $source, and writing it to core/src/main/resources/GeyserIntegratedPack.mcpack")
+        packFile.parentFile.mkdirs()
+        val tmp = File(packFile.parentFile, packFile.name + ".tmp")
+        try {
+            java.net.URI(source).toURL().openStream().use { input ->
+                tmp.outputStream().use { input.copyTo(it) }
+            }
+            tmp.renameTo(packFile)
+        } finally {
+            tmp.delete()
+        }
+    }
+}
+
 tasks.processResources {
+    dependsOn(downloadIntegratedPack)
     from(generateGitProperties) {
         into(".")
     }
