@@ -2,6 +2,7 @@ import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.revwalk.RevWalk
 import net.kyori.indra.git.RepositoryValueSource
 
+import java.net.URI
 import java.util.Properties
 
 plugins {
@@ -203,10 +204,12 @@ val downloadIntegratedPack = tasks.register("downloadIntegratedPack") {
         packFile.parentFile.mkdirs()
         val tmp = File(packFile.parentFile, packFile.name + ".tmp")
         try {
-            java.net.URI(source).toURL().openStream().use { input ->
+            URI(source).toURL().openStream().use { input ->
                 tmp.outputStream().use { input.copyTo(it) }
             }
-            tmp.renameTo(packFile)
+            if (!tmp.renameTo(packFile)) {
+                throw GradleException("Failed to install downloaded integrated pack at $packFile")
+            }
         } finally {
             tmp.delete()
         }
